@@ -25,10 +25,10 @@ Pillar 對齊：每個系統必須服務於「一次下潛的滿足感」、「4
 | 1 | 物資資料庫 (Item Database) | Economy | MVP | Designed | design/gdd/item-database.md | — |
 | 2 | 觸控輸入系統 (Touch Input) | Core | MVP | Designed | design/gdd/touch-input.md | — |
 | 3 | 回合計時系統 (Round Timer) | Core | MVP | Designed | design/gdd/round-timer.md | — |
-| 4 | 船控制器 (Boat Controller) | Core | MVP | Not Started | — | 觸控輸入 |
-| 5 | 磁鐵狀態機 (Magnet State Machine) | Gameplay | MVP | Not Started | — | 觸控輸入, 物資資料庫 |
+| 4 | 船控制器 (Boat Controller) | Core | MVP | Designed | design/gdd/boat-controller.md | 觸控輸入 |
+| 5 | 磁鐵狀態機 (Magnet State Machine) | Gameplay | MVP | Designed | design/gdd/magnet-state-machine.md | 觸控輸入, 物資資料庫 |
 | 6 | 物件吸附系統 (Object Attachment) | Gameplay | MVP | Not Started | — | 磁鐵狀態機 |
-| 7 | 經濟系統 (Economy) | Economy | MVP | Not Started | — | 物資資料庫 |
+| 7 | 經濟系統 (Economy) | Economy | MVP | Designed | design/gdd/economy-system.md | 物資資料庫 |
 | 8 | 物資生成系統 (Resource Spawner) | Gameplay | MVP | Not Started | — | 物資資料庫 |
 | 9 | 鏡頭系統 (Camera System) | Core | MVP | Not Started | — | 船控制器, 磁鐵狀態機 |
 | 10 | 回合管理器 (Round Manager) | Gameplay | MVP | Not Started | — | 回合計時, 磁鐵狀態機, 經濟系統 |
@@ -145,10 +145,10 @@ Pillar 對齊：每個系統必須服務於「一次下潛的滿足感」、「4
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 17 |
-| Design docs started | 3 |
+| Design docs started | 6 |
 | Design docs reviewed | 0 |
 | Design docs approved | 0 |
-| MVP systems designed | 3/11 |
+| MVP systems designed | 6/11 |
 | Vertical Slice systems designed | 0/5 |
 
 ---

@@ -1,7 +1,7 @@
 # Grab2 — Session Handoff
 
 > **Last Updated**: 2026-03-25
-> **Current Phase**: Pre-Production（概念確立，準備進入系統設計）
+> **Current Phase**: Pre-Production → Implementation Ready（6/11 MVP GDD 完成，資料夾結構已建立）
 
 ---
 
@@ -26,12 +26,16 @@
   - `design/gdd/round-timer.md` — 回合計時系統
 
 ### In Progress
-- [ ] Core 層 GDD（0/3）：船控制器、磁鐵狀態機、經濟系統
+- [x] Core 層 GDD（3/3 完成）：
+  - `design/gdd/boat-controller.md` — 船控制器
+  - `design/gdd/magnet-state-machine.md` — 磁鐵狀態機
+  - `design/gdd/economy-system.md` — 經濟系統
 - [ ] Feature 層 GDD（0/4）：物件吸附、物資生成、鏡頭、回合管理器
 - [ ] Presentation 層 GDD（0/1）：HUD
+- [x] 程式碼資料夾結構 (`docs/architecture/folder-structure.md`)
 
-### Not Started
-- [ ] MVP 實作
+### Not Started (Ready to Start)
+- [ ] MVP 實作（Foundation + Core 層 GDD 已就緒）
 - [ ] 觸控操作適配
 - [ ] 音效/視覺 juice
 - [ ] 多海域內容
@@ -43,6 +47,8 @@
 | File | Purpose |
 |------|---------|
 | `design/gdd/game-concept.md` | 遊戲概念文件（核心設計方向） |
+| `design/gdd/systems-index.md` | 系統索引（17 系統、依賴圖、設計順序） |
+| `docs/architecture/folder-structure.md` | 程式碼資料夾結構和遷移計劃 |
 | `.claude/docs/technical-preferences.md` | 技術偏好（命名規範等） |
 | `CLAUDE.md` | 專案主設定 |
 | `docs/engine-reference/godot/VERSION.md` | 引擎版本參考 |
