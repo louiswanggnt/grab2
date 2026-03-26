@@ -1,25 +1,24 @@
 extends Area2D
 
-## Player-controlled magnet with 4-state cycle.
+## Player-controlled magnet with simplified state cycle.
 ##
-## State flow (per GDD):
-##   IDLE → SINKING → RETRIEVING → CHECK → IDLE
+## State flow:
+##   IDLE → SINKING → CHECK → IDLE
 ##
-## IDLE:       Magnet at mount_position. Player moves boat. Tap to drop.
-## SINKING:    Gravity pulls down. Swipe steers X. Area2D catches items.
-## RETRIEVING: Hold triggers upward pull. Weight slows retrieval.
-## CHECK:      Reached surface. Items exchanged. Auto-returns to IDLE.
+## IDLE:    Magnet at mount_position. Player moves boat. Tap to drop.
+## SINKING: Gravity pulls down. Hold mouse = pull up. Release = sink again.
+##          A/D still moves boat at half speed. Area2D catches items on contact.
+## CHECK:   Reached surface. Items exchanged. Auto-returns to IDLE.
 
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
 
-enum State { IDLE, SINKING, RETRIEVING, CHECK }
+enum State { IDLE, SINKING, CHECK }
 
 const _VALID_TRANSITIONS: Dictionary = {
 	State.IDLE: [State.SINKING],
-	State.SINKING: [State.RETRIEVING],
-	State.RETRIEVING: [State.CHECK],
+	State.SINKING: [State.CHECK],
 	State.CHECK: [State.IDLE],
 }
 
@@ -36,25 +35,21 @@ signal check_completed()
 # Exports
 # ---------------------------------------------------------------------------
 
+## These read defaults from GameConfig but can be overridden per-instance via @export
 @export_group("Physics")
-@export_range(300.0, 1000.0, 10.0) var sink_gravity: float = 600.0
-@export_range(300.0, 800.0, 10.0) var max_sink_speed: float = 500.0
-@export_range(200.0, 500.0, 10.0) var base_retrieve_speed: float = 300.0
-@export_range(50.0, 300.0, 10.0) var steering_power: float = 150.0
-@export_range(0.5, 0.95, 0.01) var steering_damping: float = 0.85
-@export_range(0.05, 0.3, 0.01) var weight_drag_factor: float = 0.15
-
-@export_group("Depth")
-@export_range(1500.0, 3000.0, 50.0) var max_depth: float = 2000.0
-@export_range(50.0, 200.0, 10.0) var min_sink_distance: float = 100.0
-
-@export_group("Attachment")
-@export_range(1, 10, 1) var max_attach_count: int = 3
+var sink_gravity: float = 0.0
+var max_sink_speed: float = 0.0
+var base_retrieve_speed: float = 0.0
+var steering_power: float = 0.0
+var steering_damping: float = 0.0
+var weight_drag_factor: float = 0.0
+var max_depth: float = 0.0
+var max_attach_count: int = 0
 
 @export_group("Scene Bounds")
-@export var surface_y: float = 100.0
-@export var scene_left: float = 0.0
-@export var scene_right: float = 720.0
+var surface_y: float = 0.0
+var scene_left: float = 0.0
+var scene_right: float = 0.0
 
 @export_group("References")
 @export var mount_position: Vector2 = Vector2(0.0, 0.0)
@@ -67,7 +62,7 @@ signal check_completed()
 var _current_state: State = State.IDLE
 var _velocity: Vector2 = Vector2.ZERO
 var _attached_items: Array = []
-var _current_retrieve_speed: float = 0.0
+var _is_pulling: bool = false  # Hold mouse = pull up
 
 # ---------------------------------------------------------------------------
 # Child references
@@ -82,26 +77,46 @@ var _current_retrieve_speed: float = 0.0
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	# Load defaults from GameConfig
+	sink_gravity = GameConfig.MAGNET_SINK_GRAVITY
+	max_sink_speed = GameConfig.MAGNET_MAX_SINK_SPEED
+	base_retrieve_speed = GameConfig.MAGNET_BASE_RETRIEVE_SPEED
+	steering_power = GameConfig.MAGNET_STEERING_POWER
+	steering_damping = GameConfig.MAGNET_STEERING_DAMPING
+	weight_drag_factor = GameConfig.MAGNET_WEIGHT_DRAG_FACTOR
+	max_depth = GameConfig.MAX_DEPTH
+	max_attach_count = GameConfig.MAGNET_MAX_ATTACH_COUNT
+	surface_y = GameConfig.SURFACE_Y
+	scene_left = GameConfig.SCENE_LEFT
+	scene_right = GameConfig.SCENE_RIGHT
+
 	set_physics_process(false)
 	_camera.enabled = false
 
 	# Connect input signals
 	TouchInputManager.tap_performed.connect(_on_tap_performed)
 	TouchInputManager.hold_started.connect(_on_hold_started)
+	TouchInputManager.hold_released.connect(_on_hold_released)
 	TouchInputManager.swipe_updated.connect(_on_swipe_updated)
 
 	# Connect overlap for item pickup (RigidBody2D metals)
 	body_entered.connect(_on_body_entered)
 
 
-func _physics_process(delta: float) -> void:
-	match _current_state:
-		State.SINKING:
-			_process_sinking(delta)
-		State.RETRIEVING:
-			_process_retrieving(delta)
+func _unhandled_input(event: InputEvent) -> void:
+	# Right click to drop heaviest item
+	if event is InputEventMouseButton:
+		var mb: InputEventMouseButton = event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			if _current_state == State.SINKING and not _attached_items.is_empty():
+				drop_heaviest()
 
-	# Update rope visual (line from magnet up toward boat)
+
+func _physics_process(delta: float) -> void:
+	if _current_state == State.SINKING:
+		_process_sinking(delta)
+
+	# Update rope visual
 	if _rope:
 		_rope.set_point_position(1, Vector2(0, -(position.y - mount_position.y)))
 
@@ -114,13 +129,50 @@ func get_state() -> State:
 	return _current_state
 
 
+func is_pulling() -> bool:
+	return _is_pulling
+
+
 func get_attached_items() -> Array:
 	return _attached_items.duplicate()
+
+
+func drop_heaviest() -> void:
+	if _attached_items.is_empty():
+		return
+	# Find the heaviest item
+	var heaviest: Node2D = null
+	var max_weight: float = -1.0
+	for item in _attached_items:
+		if not is_instance_valid(item):
+			continue
+		var w: float = item.weight if "weight" in item else 1.0
+		if w > max_weight:
+			max_weight = w
+			heaviest = item
+	if heaviest == null:
+		return
+	# Remove from list
+	_attached_items.erase(heaviest)
+	# Detach from catch point and drop into the world
+	if heaviest.get_parent():
+		heaviest.get_parent().remove_child(heaviest)
+	# Add back to scene at current magnet position
+	get_parent().add_child(heaviest)
+	heaviest.global_position = global_position + Vector2(0, 30)
+	if heaviest is RigidBody2D:
+		heaviest.freeze = true  # Stay frozen where dropped
+	# Reposition remaining items
+	for i in range(_attached_items.size()):
+		var item: Node2D = _attached_items[i]
+		if is_instance_valid(item):
+			item.position = Vector2(0, i * 25.0)
 
 
 func force_reset() -> void:
 	_detach_all_items()
 	_velocity = Vector2.ZERO
+	_is_pulling = false
 	position = mount_position
 	_current_state = State.IDLE
 	_camera.enabled = false
@@ -132,32 +184,31 @@ func force_reset() -> void:
 # ---------------------------------------------------------------------------
 
 func _process_sinking(delta: float) -> void:
-	# Gravity acceleration with terminal velocity
-	_velocity.y = minf(_velocity.y + sink_gravity * delta, max_sink_speed)
+	if _is_pulling:
+		# Pull upward — speed reduced by weight
+		var total_weight: float = _get_total_weight()
+		var pull_speed: float = base_retrieve_speed / (1.0 + total_weight * weight_drag_factor)
+		_velocity.y = -pull_speed
+	else:
+		# Sink with gravity
+		_velocity.y = minf(_velocity.y + sink_gravity * delta, max_sink_speed)
 
-	# X-axis steering via swipe (applied in _on_swipe_updated)
+	# X-axis steering
 	_velocity.x *= steering_damping
 
 	# Apply movement
 	position.x = clampf(position.x + _velocity.x * delta, scene_left, scene_right)
 	position.y += _velocity.y * delta
 
-	# Auto-retrieve at max depth
+	# Clamp at max depth (don't go below seabed)
 	if position.y >= surface_y + max_depth:
-		_transition_to(State.RETRIEVING)
+		position.y = surface_y + max_depth
+		_velocity.y = 0.0
 
-
-func _process_retrieving(delta: float) -> void:
-	# Steering still works during retrieval
-	_velocity.x *= steering_damping
-	position.x = clampf(position.x + _velocity.x * delta, scene_left, scene_right)
-
-	# Upward movement
-	position.y -= _current_retrieve_speed * delta
-
-	# Reached surface → CHECK
-	if position.y <= surface_y:
+	# Reached surface while pulling → CHECK
+	if _is_pulling and position.y <= surface_y:
 		position.y = surface_y
+		surface_reached.emit(_attached_items.duplicate())
 		_transition_to(State.CHECK)
 
 
@@ -172,7 +223,6 @@ func _transition_to(new_state: State) -> void:
 		return
 
 	var old: State = _current_state
-	_exit_state(old)
 	_current_state = new_state
 	_enter_state(new_state)
 	state_changed.emit(old, new_state)
@@ -183,21 +233,13 @@ func _is_valid(new_state: State) -> bool:
 	return allowed.has(new_state)
 
 
-func _exit_state(state: State) -> void:
-	match state:
-		State.RETRIEVING:
-			# Emit surface_reached with items before CHECK
-			surface_reached.emit(_attached_items.duplicate())
-		_:
-			pass
-
-
 func _enter_state(state: State) -> void:
 	match state:
 		State.IDLE:
 			set_physics_process(false)
 			_camera.enabled = false
 			_velocity = Vector2.ZERO
+			_is_pulling = false
 			_detach_all_items()
 			check_completed.emit()
 
@@ -205,31 +247,22 @@ func _enter_state(state: State) -> void:
 			set_physics_process(true)
 			_camera.enabled = true
 			_velocity = Vector2.ZERO
+			_is_pulling = false
 			# First drop starts the round timer
 			if round_timer:
 				round_timer.start_round()
 
-		State.RETRIEVING:
-			set_physics_process(true)
-			# Calculate speed with weight penalty
-			var total_weight: float = _get_total_weight()
-			_current_retrieve_speed = base_retrieve_speed / (1.0 + total_weight * weight_drag_factor)
-			# Force-retrieve on timer expired handled externally
-
 		State.CHECK:
 			set_physics_process(false)
-			# Pause timer during CHECK
+			_is_pulling = false
 			if round_timer:
 				round_timer.set_paused(true)
-			# Deferred to avoid nested transition overwriting state_changed
 			call_deferred("_complete_check")
 
 
 func _complete_check() -> void:
-	# Resume timer
 	if round_timer:
 		round_timer.set_paused(false)
-	# Teleport back to mount
 	position = mount_position
 	_transition_to(State.IDLE)
 
@@ -256,16 +289,14 @@ func _on_body_entered(body: Node2D) -> void:
 func _attach_item_deferred(item: Node2D) -> void:
 	if not is_instance_valid(item):
 		return
-	# Freeze the RigidBody2D so it stops simulating physics
 	if item is RigidBody2D:
 		item.freeze = true
 	if item.get_parent():
 		item.get_parent().remove_child(item)
 	if _catch_point:
 		_catch_point.add_child(item)
-		# Stack items below the magnet
 		var idx: int = _attached_items.find(item)
-		item.position = Vector2(0, idx * 25.0)
+		item.position = Vector2(0, idx * GameConfig.MAGNET_ATTACH_SPACING)
 		item.rotation = 0.0
 
 
@@ -291,20 +322,22 @@ func _get_total_weight() -> float:
 # ---------------------------------------------------------------------------
 
 func _on_tap_performed(_tap_position: Vector2) -> void:
-	# Tap while IDLE → start sinking (drop magnet)
 	if _current_state == State.IDLE:
 		_transition_to(State.SINKING)
 
 
 func _on_hold_started(_hold_position: Vector2) -> void:
-	# Hold while SINKING → start retrieving
 	if _current_state == State.SINKING:
-		# Guard: must have sunk at least min_sink_distance
-		if position.y > surface_y + min_sink_distance:
-			_transition_to(State.RETRIEVING)
+		_is_pulling = true
+		_velocity.y = 0.0  # Reset downward velocity immediately
+
+
+func _on_hold_released(_release_position: Vector2) -> void:
+	if _current_state == State.SINKING:
+		_is_pulling = false
+		_velocity.y = 0.0  # Reset so gravity starts fresh
 
 
 func _on_swipe_updated(delta_x: float) -> void:
-	# Steering only during SINKING or RETRIEVING
-	if _current_state == State.SINKING or _current_state == State.RETRIEVING:
+	if _current_state == State.SINKING:
 		_velocity.x += delta_x * steering_power

@@ -2,7 +2,7 @@
 
 ## Technology Stack
 
-- **Engine**: Godot 4.3
+- **Engine**: Godot 4.6.1
 - **Language**: GDScript (primary), C++ via GDExtension (performance-critical)
 - **Build System**: SCons (engine), Godot Export Templates
 - **Asset Pipeline**: Godot Import System + custom resource pipeline

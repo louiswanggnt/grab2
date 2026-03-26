@@ -14,14 +14,11 @@ signal position_changed(new_x: float)
 # Exports
 # ---------------------------------------------------------------------------
 
-@export_group("Movement")
-@export_range(200.0, 600.0, 10.0) var base_speed: float = 400.0
-@export_range(0.0, 1.0, 0.05) var permanent_speed_bonus: float = 0.0
-@export_range(0.5, 2.0, 0.1) var roguelite_speed_multiplier: float = 1.0
-
-@export_group("Boundaries")
-@export var scene_left: float = 0.0
-@export var scene_right: float = 720.0
+var base_speed: float = 0.0
+var permanent_speed_bonus: float = 0.0
+var roguelite_speed_multiplier: float = 1.0
+var scene_left: float = 0.0
+var scene_right: float = 0.0
 
 # ---------------------------------------------------------------------------
 # State
@@ -30,6 +27,7 @@ signal position_changed(new_x: float)
 var _can_move: bool = true
 var _move_direction: float = 0.0
 var _prev_x: float = 0.0
+var _speed_multiplier: float = 1.0
 
 # ---------------------------------------------------------------------------
 # Child references
@@ -43,6 +41,9 @@ var _prev_x: float = 0.0
 # ---------------------------------------------------------------------------
 
 func _ready() -> void:
+	base_speed = GameConfig.BOAT_BASE_SPEED
+	scene_left = GameConfig.SCENE_LEFT
+	scene_right = GameConfig.SCENE_RIGHT
 	_prev_x = position.x
 	TouchInputManager.move_direction_changed.connect(_on_move_direction_changed)
 	position.x = clampf(position.x, scene_left, scene_right)
@@ -52,7 +53,7 @@ func _physics_process(_delta: float) -> void:
 	velocity.y = 0.0
 
 	if _can_move and _move_direction != 0.0:
-		var effective_speed: float = base_speed * (1.0 + permanent_speed_bonus) * roguelite_speed_multiplier
+		var effective_speed: float = base_speed * (1.0 + permanent_speed_bonus) * roguelite_speed_multiplier * _speed_multiplier
 		velocity.x = _move_direction * effective_speed
 	else:
 		velocity.x = 0.0
@@ -73,6 +74,10 @@ func set_can_move(enabled: bool) -> void:
 	_can_move = enabled
 	if not enabled:
 		velocity = Vector2.ZERO
+
+
+func set_speed_multiplier(multiplier: float) -> void:
+	_speed_multiplier = multiplier
 
 
 func get_effective_speed() -> float:

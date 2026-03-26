@@ -281,3 +281,32 @@ production/session-logs/session-log.md
 production/session-state/active.md
 ---
 
+## Session End: 20260326_152210
+### Commits
+b80290c Update session logs and archive active session state
+df19a03 Merge main into master and resolve README conflict
+2b923cc Initial commit
+2735b78 Fix boat movement after retrieval and improve metal spawn distribution
+0ba097d Implement Foundation + Core layers with physics-based metal objects
+---
+
+## Session: 20260326 — MVP Playable 達成
+
+### 完成項目
+1. **修復 nested state transition bug** — CHECK→IDLE 被 RETRIEVING→CHECK 覆蓋，用 call_deferred 解決
+2. **金屬物改為 RigidBody2D** — 凍結在海床上，重量∝大小，4 種等級 125 個
+3. **海床 StaticBody2D** — 棕色底部，碰撞區域 1200×200
+4. **狀態機簡化** — 移除 RETRIEVING 狀態，改用 _is_pulling 旗標（長按上拉/放開下沉）
+5. **SINKING 時船半速移動** — 磁鐵 X 軸同步跟隨船
+6. **右鍵丟棄最重物品** — drop_heaviest() 方法
+7. **裝飾魚群** — 15→100 條，Node2D，無碰撞，隨機游動
+8. **GameConfig 統一數值管理** — autoload/game_config.gd，所有可調參數集中
+9. **修復魚群 Y 軸 bug** — add_child 前先設 position，讓 _ready 讀到正確 _base_y
+10. **海床位置從 GameConfig 讀取** — Main.gd _ready() 動態設定
+
+### 已知問題
+- economy_system.gd 的 relic_found signal 未使用（warning）
+- ItemDatabase 載入 0 items（需執行 generate_items.gd）
+- 舊原型腳本 Magnet.gd / Boat.gd 仍存在但未使用
+---
+

@@ -9,6 +9,7 @@ extends Node2D
 
 var magnet_scene: PackedScene = preload("res://Magnet.tscn")
 var metal_scene: PackedScene = preload("res://MetalObject.tscn")
+var fish_scene: PackedScene = preload("res://Fish.tscn")
 
 var magnet: Area2D = null
 var economy: Node = null
@@ -23,7 +24,7 @@ func _ready() -> void:
 	# Create round timer
 	round_timer = load("res://src/main/round_timer.gd").new()
 	round_timer.name = "RoundTimer"
-	round_timer.round_duration = 240.0
+	round_timer.round_duration = GameConfig.ROUND_DURATION
 	add_child(round_timer)
 
 	# Instantiate magnet at boat's mount point
@@ -44,51 +45,74 @@ func _ready() -> void:
 	round_timer.time_updated.connect(_on_timer_updated)
 	round_timer.time_expired.connect(_on_timer_expired)
 
-	# Spawn metal objects
+	# Position seabed from GameConfig
+	var seabed: StaticBody2D = $Seabed
+	seabed.position.y = GameConfig.SEABED_Y
+
+	# Spawn metal objects and decorative fish
 	_spawn_metals()
+	_spawn_fish()
 	_update_ui()
 
 
 func _process(_delta: float) -> void:
-	# Keep magnet mount_position synced with boat while IDLE
-	if magnet and magnet.get_state() == 0:  # State.IDLE = 0
-		var mount_pos: Vector2 = boat.get_node("MagnetMount").global_position
+	if not magnet:
+		return
+	var mount_pos: Vector2 = boat.get_node("MagnetMount").global_position
+	magnet.mount_position = mount_pos
+
+	if magnet.get_state() == 0:  # IDLE — stick to boat
 		magnet.position = mount_pos
-		magnet.mount_position = mount_pos
+	elif magnet.get_state() == 1:  # SINKING — sync X with boat
+		magnet.position.x = mount_pos.x
 
 
 func _spawn_metals() -> void:
-	# Weight tiers: [weight, value, size, spawn_y_min, spawn_y_max, count]
-	# Lighter metals near surface, heavier metals deeper
-	var tiers: Array = [
-		[1.0, 5, 20.0, 300, 600, 10],     # Light — shallow water
-		[2.0, 15, 28.0, 600, 1000, 8],     # Medium — mid depth
-		[3.0, 30, 36.0, 1000, 1400, 5],    # Heavy — deep
-		[5.0, 60, 48.0, 1400, 1700, 2],    # Very heavy — bottom
-	]
-
-	for tier in tiers:
+	for tier in GameConfig.METAL_TIERS:
 		var w: float = tier[0]
 		var v: int = tier[1]
 		var s: float = tier[2]
-		var y_min: float = tier[3]
-		var y_max: float = tier[4]
-		var count: int = tier[5]
+		var count: int = tier[3]
 		for i in range(count):
 			var metal: RigidBody2D = metal_scene.instantiate()
 			metal_container.add_child(metal)
 			metal.set_metal_properties(w, v, s)
+			metal.freeze = true
 			metal.position = Vector2(
-				randf_range(50, 670),
-				randf_range(y_min, y_max)
+				randf_range(GameConfig.METAL_SPAWN_X_MIN, GameConfig.METAL_SPAWN_X_MAX),
+				GameConfig.METAL_SEABED_TOP_Y - s / 2.0 - randf_range(0, s * 2.0)
 			)
 
 
+func _spawn_fish() -> void:
+	for i in range(GameConfig.FISH_COUNT):
+		var fish: Node2D = fish_scene.instantiate()
+		# Set position BEFORE add_child so _ready() picks up correct _base_y
+		fish.position = Vector2(
+			randf_range(GameConfig.FISH_SPAWN_X_MIN, GameConfig.FISH_SPAWN_X_MAX),
+			randf_range(GameConfig.FISH_SPAWN_Y_MIN, GameConfig.FISH_SPAWN_Y_MAX)
+		)
+		var s: float = randf_range(GameConfig.FISH_SCALE_MIN, GameConfig.FISH_SCALE_MAX)
+		fish.scale *= s
+		add_child(fish)
+
+
 func _on_magnet_state_changed(_old_state: int, new_state: int) -> void:
-	# Lock boat when magnet is not IDLE (0)
-	boat.set_can_move(new_state == 0)
-	# Camera switching
-	boat.set_camera_active(new_state == 0)
+	# IDLE (0): full speed, boat camera
+	# SINKING (1): half speed, magnet camera
+	# CHECK (2): locked, magnet camera
+	match new_state:
+		0:  # IDLE
+			boat.set_can_move(true)
+			boat.set_speed_multiplier(1.0)
+			boat.set_camera_active(true)
+		1:  # SINKING
+			boat.set_can_move(true)
+			boat.set_speed_multiplier(GameConfig.BOAT_SINKING_SPEED_MULTIPLIER)
+			boat.set_camera_active(false)
+		_:  # CHECK
+			boat.set_can_move(false)
+			boat.set_camera_active(false)
 
 
 func _on_magnet_surface_reached(items: Array) -> void:

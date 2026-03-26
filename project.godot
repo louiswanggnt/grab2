@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+GameConfig="*res://autoload/game_config.gd"
 ItemDatabase="*res://src/items/item_database.gd"
 TouchInputManager="*res://autoload/touch_input_manager.gd"
 
