@@ -221,9 +221,8 @@ func _enter_state(state: State) -> void:
 			# Pause timer during CHECK
 			if round_timer:
 				round_timer.set_paused(true)
-			# Auto-transition to IDLE after a brief moment
-			# (In full game this would show UI; for MVP, go immediately)
-			_complete_check()
+			# Deferred to avoid nested transition overwriting state_changed
+			call_deferred("_complete_check")
 
 
 func _complete_check() -> void:

@@ -58,27 +58,29 @@ func _process(_delta: float) -> void:
 
 
 func _spawn_metals() -> void:
-	# Weight tiers: [weight, value, size, count]
+	# Weight tiers: [weight, value, size, spawn_y_min, spawn_y_max, count]
+	# Lighter metals near surface, heavier metals deeper
 	var tiers: Array = [
-		[1.0, 5, 20.0, 10],    # Light — small, low value
-		[2.0, 15, 28.0, 8],    # Medium
-		[3.0, 30, 36.0, 5],    # Heavy
-		[5.0, 60, 48.0, 2],    # Very heavy — big, high value
+		[1.0, 5, 20.0, 300, 600, 10],     # Light — shallow water
+		[2.0, 15, 28.0, 600, 1000, 8],     # Medium — mid depth
+		[3.0, 30, 36.0, 1000, 1400, 5],    # Heavy — deep
+		[5.0, 60, 48.0, 1400, 1700, 2],    # Very heavy — bottom
 	]
 
 	for tier in tiers:
 		var w: float = tier[0]
 		var v: int = tier[1]
 		var s: float = tier[2]
-		var count: int = tier[3]
+		var y_min: float = tier[3]
+		var y_max: float = tier[4]
+		var count: int = tier[5]
 		for i in range(count):
 			var metal: RigidBody2D = metal_scene.instantiate()
 			metal_container.add_child(metal)
 			metal.set_metal_properties(w, v, s)
-			# Spawn above seabed so they fall and stack
 			metal.position = Vector2(
 				randf_range(50, 670),
-				randf_range(1400, 1700)
+				randf_range(y_min, y_max)
 			)
 
 
