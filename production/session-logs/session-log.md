@@ -8,3 +8,213 @@ cd0dbe5 Initial commit: fishing game prototype
 cd0dbe5 Initial commit: fishing game prototype
 ---
 
+## Archived Session State: 20260325_144211
+# Active Session State
+
+> **Updated**: 2026-03-25
+> **Branch**: claude/crazy-albattani
+
+## Current Task
+
+- **Task**: Foundation 層 GDD 完成，準備進入 Core 層
+- **Status**: 3/11 MVP systems designed
+- **Next**: `/design-system boat-controller` (Core Layer #4)
+
+## Completed This Session
+
+1. `/setup-engine` — Godot 4.3 配置完成
+2. `/brainstorm` — 遊戲概念文件 (`design/gdd/game-concept.md`)
+3. 建立跨 Session 管理文件 (HANDOFF.md, README.md)
+4. `/map-systems` — 系統索引 (`design/gdd/systems-index.md`)
+   - 17 個系統：11 MVP / 5 VS / 1 Alpha
+5. GDD 撰寫 — Foundation 層完成：
+   - 物資資料庫 (`design/gdd/item-database.md`)
+   - 觸控輸入系統 (`design/gdd/touch-input.md`)
+   - 回合計時系統 (`design/gdd/round-timer.md`)
+
+## Design Order Remaining
+
+| Order | System | Layer | Status |
+|-------|--------|-------|--------|
+| 4 | 船控制器 | Core | Not Started |
+| 5 | 磁鐵狀態機 | Core | Not Started |
+| 6 | 經濟系統 | Core | Not Started |
+| 7 | 物件吸附系統 | Feature | Not Started |
+| 8 | 物資生成系統 | Feature | Not Started |
+| 9 | 鏡頭系統 | Feature | Not Started |
+| 10 | 回合管理器 | Feature | Not Started |
+| 11 | HUD 系統 | Presentation | Not Started |
+---
+
+## Session End: 20260325_144211
+### Commits
+42d7c57 Add project setup, game concept, and Foundation layer GDDs
+cd0dbe5 Initial commit: fishing game prototype
+---
+
+## Archived Session State: 20260325_145252
+# Active Session State
+
+> **Updated**: 2026-03-25
+> **Branch**: claude/crazy-albattani
+
+## Current Task
+
+- **Task**: Core 層 GDD 完成 + 資料夾結構規劃完成，準備開始寫程式
+- **Status**: 6/11 MVP systems designed, folder structure ready
+- **Next**: 開始 MVP 實作 — 建立 Autoload + ItemData Resource，然後重構原型
+
+## Completed This Session
+
+1. Core 層 GDD 完成：
+   - `design/gdd/boat-controller.md` — 船控制器
+   - `design/gdd/magnet-state-machine.md` — 磁鐵狀態機
+   - `design/gdd/economy-system.md` — 經濟系統
+2. 程式碼資料夾結構規劃 (`docs/architecture/folder-structure.md`)
+3. 資料夾實際建立完成
+
+## Design Order Remaining (Feature + Presentation)
+
+| Order | System | Layer | Status |
+|-------|--------|-------|--------|
+| 7 | 物件吸附系統 | Feature | Not Started |
+| 8 | 物資生成系統 | Feature | Not Started |
+| 9 | 鏡頭系統 | Feature | Not Started |
+| 10 | 回合管理器 | Feature | Not Started |
+| 11 | HUD 系統 | Presentation | Not Started |
+
+## Implementation Ready
+
+Foundation + Core 層 6 個系統已有完整 GDD，可以開始寫程式。
+Feature 層 GDD 可以在實作過程中並行撰寫。
+---
+
+## Session End: 20260325_145252
+### Commits
+c52e664 Add Core layer GDDs and project folder structure
+42d7c57 Add project setup, game concept, and Foundation layer GDDs
+cd0dbe5 Initial commit: fishing game prototype
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260325_150511
+### Commits
+c52e664 Add Core layer GDDs and project folder structure
+42d7c57 Add project setup, game concept, and Foundation layer GDDs
+cd0dbe5 Initial commit: fishing game prototype
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+---
+
+## Session End: 20260325_150856
+### Commits
+c52e664 Add Core layer GDDs and project folder structure
+42d7c57 Add project setup, game concept, and Foundation layer GDDs
+cd0dbe5 Initial commit: fishing game prototype
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_093010
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_093028
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_093112
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_093151
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_093249
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_093530
+### Uncommitted Changes
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_103209
+### Uncommitted Changes
+Boat.tscn
+Magnet.tscn
+Main.gd
+Main.tscn
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_104009
+### Uncommitted Changes
+Boat.tscn
+Magnet.tscn
+Main.gd
+Main.tscn
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_104435
+### Uncommitted Changes
+Boat.tscn
+Magnet.tscn
+Main.gd
+Main.tscn
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_105331
+### Uncommitted Changes
+Boat.tscn
+Magnet.tscn
+Main.gd
+Main.tscn
+MetalObject.tscn
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+
+## Session End: 20260326_131219
+### Uncommitted Changes
+Boat.tscn
+Magnet.tscn
+Main.gd
+Main.tscn
+MetalObject.tscn
+production/session-logs/session-log.md
+production/session-state/active.md
+project.godot
+---
+

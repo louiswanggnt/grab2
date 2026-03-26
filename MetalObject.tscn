@@ -1,18 +1,43 @@
 [gd_scene format=3 uid="uid://metal123"]
 
 [sub_resource type="GDScript" id="GDScript_metal"]
-script/source = "extends Area2D
+script/source = "extends RigidBody2D
 
-func _ready():
+## weight and value are set by the spawner via set_metal_properties()
+var weight: float = 1.0
+var value: int = 10
+
+func _ready() -> void:
 	add_to_group(\"metal\")
-	# 隨機金屬顏色
-	$ColorRect.color = Color(randf_range(0.5, 0.7), randf_range(0.4, 0.6), randf_range(0.3, 0.5), 1)
+
+func set_metal_properties(p_weight: float, p_value: int, p_size: float) -> void:
+	weight = p_weight
+	value = p_value
+	mass = p_weight
+
+	# Scale visual and collision to match weight
+	var half: float = p_size / 2.0
+	$ColorRect.offset_left = -half
+	$ColorRect.offset_top = -half
+	$ColorRect.offset_right = half
+	$ColorRect.offset_bottom = half
+	$CollisionShape2D.shape = $CollisionShape2D.shape.duplicate()
+	$CollisionShape2D.shape.size = Vector2(p_size, p_size)
+
+	# Heavier = darker / more golden color
+	var t: float = clampf(p_weight / 5.0, 0.0, 1.0)
+	$ColorRect.color = Color(
+		lerpf(0.55, 0.85, t),
+		lerpf(0.45, 0.65, t),
+		lerpf(0.35, 0.15, t),
+		1.0
+	)
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_metal"]
 size = Vector2(30, 30)
 
-[node name="MetalObject" type="Area2D" groups=["metal"]]
+[node name="MetalObject" type="RigidBody2D" groups=["metal"]]
 script = SubResource("GDScript_metal")
 
 [node name="ColorRect" type="ColorRect" parent="."]

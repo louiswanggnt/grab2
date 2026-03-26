@@ -1,23 +1,39 @@
-[gd_scene load_steps=3 format=3 uid="uid://c1v3j3u3j3u3"]
+[gd_scene load_steps=4 format=3 uid="uid://c1v3j3u3j3u3"]
 
 [ext_resource type="Script" path="res://Main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://boat123" path="res://Boat.tscn" id="2_boat"]
+
+[sub_resource type="RectangleShape2D" id="seabed_shape"]
+size = Vector2(720, 40)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
 
 [node name="SeaBackground" type="ColorRect" parent="."]
-offset_right = 1152.0
+offset_right = 720.0
 offset_bottom = 2000.0
 color = Color(0, 0.4, 0.7, 1)
 
 [node name="Surface" type="ColorRect" parent="."]
-offset_right = 1152.0
+offset_right = 720.0
 offset_bottom = 100.0
 color = Color(0.5, 0.8, 1, 1)
 
 [node name="Boat" parent="." instance=ExtResource("2_boat")]
-position = Vector2(576, 80)
+position = Vector2(360, 80)
+
+[node name="Seabed" type="StaticBody2D" parent="."]
+position = Vector2(360, 1820)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Seabed"]
+shape = SubResource("seabed_shape")
+
+[node name="SeabedVisual" type="ColorRect" parent="Seabed"]
+offset_left = -360.0
+offset_top = -20.0
+offset_right = 360.0
+offset_bottom = 20.0
+color = Color(0.35, 0.25, 0.15, 1)
 
 [node name="MetalContainer" type="Node2D" parent="."]
 
@@ -26,13 +42,13 @@ position = Vector2(576, 80)
 [node name="MoneyLabel" type="Label" parent="UI"]
 offset_left = 20.0
 offset_top = 20.0
-offset_right = 120.0
+offset_right = 300.0
 offset_bottom = 46.0
 text = "Money: $0"
 
 [node name="InfoLabel" type="Label" parent="UI"]
 offset_left = 20.0
 offset_top = 50.0
-offset_right = 400.0
+offset_right = 700.0
 offset_bottom = 76.0
-text = "A/D to Move | Click to Drop | Hold Left Click to Retract"
+text = "Click to drop magnet | Hold to retrieve"
