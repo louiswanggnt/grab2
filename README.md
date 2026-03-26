@@ -1,3 +1,4 @@
+
 # Grab2 — 磁鐵深海撈寶
 
 一款 2D 物理抓取 Roguelite 手機遊戲。
@@ -42,3 +43,6 @@
 **Phase**: Pre-Production（概念確立，準備進入系統設計）
 
 詳見 `HANDOFF.md` 了解當前進度。
+
+# grab2
+2b923cc040c3dd1d185b9c10de18ace63132d0d3
