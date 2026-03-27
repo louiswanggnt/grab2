@@ -1,45 +1,57 @@
 extends RigidBody2D
 
 ## Metal object that can be picked up by the magnet.
-## weight and value are set by the spawner via set_metal_properties().
+## Properties are set by the spawner via set_metal_properties().
 
 var weight: float = 1.0
 var value: int = 10
+var tier_id: String = ""
+var variant_index: int = 0
 
 
 func _ready() -> void:
 	add_to_group("metal")
 
 
-## Sprite paths per weight tier. Fallback to placeholder + color if missing.
-const TIER_SPRITES: Dictionary = {
-	1.0: "res://assets/sprites/items/metal_light.png",
-	2.0: "res://assets/sprites/items/metal_medium.png",
-	3.0: "res://assets/sprites/items/metal_heavy.png",
-	5.0: "res://assets/sprites/items/metal_rare.png",
-}
-
-
-func set_metal_properties(p_weight: float, p_value: int, p_size: float) -> void:
+## Configure this metal object.
+## p_weight     — physics weight (affects retrieval drag)
+## p_value      — money earned on collection
+## p_size       — collision & display size in pixels
+## p_tier_id    — tier identifier (e.g. "light", "medium") for sprite lookup
+## p_variant_idx — which variant (0-based) for numbered sprites
+func set_metal_properties(p_weight: float, p_value: int, p_size: float,
+		p_tier_id: String = "", p_variant_idx: int = 0) -> void:
 	weight = p_weight
 	value = p_value
 	mass = p_weight
+	tier_id = p_tier_id
+	variant_index = p_variant_idx
 
-	# Try loading tier-specific sprite
-	var sprite_path: String = TIER_SPRITES.get(p_weight, "")
-	if sprite_path != "" and ResourceLoader.exists(sprite_path):
-		$Sprite2D.texture = load(sprite_path)
-		$Sprite2D.modulate = Color.WHITE
-		# Scale to target size based on actual texture
-		var tex_size: float = maxf($Sprite2D.texture.get_width(), 1.0)
-		var scale_factor: float = p_size / tex_size
-		$Sprite2D.scale = Vector2(scale_factor, scale_factor)
-	else:
-		# Fallback: scale placeholder and tint by weight
-		var scale_factor: float = p_size / 20.0
-		$Sprite2D.scale = Vector2(scale_factor, scale_factor)
+	# Try loading variant sprite: metal_{id}{nn}.png → fallback metal_{id}.png
+	var loaded: bool = false
+	if tier_id != "":
+		# First try numbered variant: metal_light01.png
+		var variant_path: String = "res://assets/sprites/items/metal_%s%02d.png" % [
+			tier_id, p_variant_idx + 1]
+		if ResourceLoader.exists(variant_path):
+			_apply_sprite(load(variant_path), p_size)
+			loaded = true
+		else:
+			# Fallback to single sprite: metal_light.png
+			var fallback_path: String = "res://assets/sprites/items/metal_%s.png" % tier_id
+			if ResourceLoader.exists(fallback_path):
+				_apply_sprite(load(fallback_path), p_size)
+				loaded = true
+
+	if not loaded:
+		# Fallback: keep ColorRect placeholder, tint by weight
+		var half: float = p_size / 2.0
+		$ColorRect.offset_left = -half
+		$ColorRect.offset_top = -half
+		$ColorRect.offset_right = half
+		$ColorRect.offset_bottom = half
 		var t: float = clampf(p_weight / 5.0, 0.0, 1.0)
-		$Sprite2D.modulate = Color(
+		$ColorRect.color = Color(
 			lerpf(0.55, 0.85, t),
 			lerpf(0.45, 0.65, t),
 			lerpf(0.35, 0.15, t),
@@ -52,3 +64,13 @@ func set_metal_properties(p_weight: float, p_value: int, p_size: float) -> void:
 		shape = shape.duplicate()
 		shape.size = Vector2(p_size, p_size)
 		$CollisionShape2D.shape = shape
+
+
+## Apply a loaded texture to the Sprite2D and hide the ColorRect fallback.
+func _apply_sprite(tex: Texture2D, target_size: float) -> void:
+	$Sprite2D.texture = tex
+	$Sprite2D.visible = true
+	$ColorRect.visible = false
+	var tex_size: float = maxf(tex.get_width(), 1.0)
+	var scale_factor: float = target_size / tex_size
+	$Sprite2D.scale = Vector2(scale_factor, scale_factor)

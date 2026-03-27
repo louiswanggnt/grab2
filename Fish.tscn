@@ -11,10 +11,13 @@ var _direction: float = 1.0
 var _time_offset: float = 0.0
 var _base_y: float = 0.0
 var _body_color: Color = Color.WHITE
+var _has_sprite: bool = false
+var _fish_size: float = 24.0
 
 func _ready() -> void:
 	swim_speed = GameConfig.FISH_BASE_SWIM_SPEED
 	vertical_drift = GameConfig.FISH_VERTICAL_DRIFT
+	_fish_size = GameConfig.FISH_BASE_SIZE
 	_time_offset = randf() * TAU
 	_base_y = position.y
 	_direction = [-1.0, 1.0].pick_random()
@@ -26,7 +29,19 @@ func _ready() -> void:
 		0.7
 	)
 	scale.x = _direction
-	queue_redraw()
+
+	# Try loading real sprite
+	var sprite_path: String = \"res://assets/sprites/items/fish.png\"
+	if ResourceLoader.exists(sprite_path):
+		$Sprite2D.texture = load(sprite_path)
+		$Sprite2D.visible = true
+		# Scale sprite to match configured fish size
+		var tex_w: float = maxf($Sprite2D.texture.get_width(), 1.0)
+		$Sprite2D.scale = Vector2(_fish_size / tex_w, _fish_size / tex_w)
+		_has_sprite = true
+	else:
+		_has_sprite = false
+		queue_redraw()
 
 func _process(delta: float) -> void:
 	position.x += _direction * swim_speed * delta
@@ -40,17 +55,24 @@ func _process(delta: float) -> void:
 		_base_y += randf_range(-30, 30)
 
 func _draw() -> void:
+	if _has_sprite:
+		return
+	# Procedural fish scaled by _fish_size (base radius = _fish_size / 2)
+	var r: float = _fish_size / 2.0
 	var body_pts: PackedVector2Array = PackedVector2Array()
 	for i in range(12):
 		var angle: float = TAU * i / 12.0
-		body_pts.append(Vector2(cos(angle) * 12, sin(angle) * 7))
+		body_pts.append(Vector2(cos(angle) * r, sin(angle) * r * 0.58))
 	draw_colored_polygon(body_pts, _body_color)
 	var tail: PackedVector2Array = PackedVector2Array([
-		Vector2(-12, 0), Vector2(-20, -8), Vector2(-20, 8)])
+		Vector2(-r, 0), Vector2(-r * 1.67, -r * 0.67), Vector2(-r * 1.67, r * 0.67)])
 	draw_colored_polygon(tail, _body_color.darkened(0.2))
-	draw_circle(Vector2(6, -2), 2.0, Color.WHITE)
-	draw_circle(Vector2(7, -2), 1.0, Color.BLACK)
+	draw_circle(Vector2(r * 0.5, -r * 0.17), r * 0.17, Color.WHITE)
+	draw_circle(Vector2(r * 0.58, -r * 0.17), r * 0.08, Color.BLACK)
 "
 
 [node name="Fish" type="Node2D"]
 script = SubResource("GDScript_fish")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+visible = false

@@ -9,37 +9,37 @@ size = Vector2(1200, 200)
 [node name="Main" type="Node2D" unique_id=1185125499]
 script = ExtResource("1_main")
 
-[node name="SeaGradient" type="Node2D" parent="."]
+[node name="SeaGradient" type="Node2D" parent="." unique_id=758179727]
 
-[node name="Layer0_Sky" type="ColorRect" parent="SeaGradient"]
+[node name="Layer0_Sky" type="ColorRect" parent="SeaGradient" unique_id=1559746893]
 offset_left = -20.0
 offset_top = -92.0
 offset_right = 1132.0
 offset_bottom = 100.0
 color = Color(0.5, 0.8, 1, 1)
 
-[node name="Layer1_Shallow" type="ColorRect" parent="SeaGradient"]
+[node name="Layer1_Shallow" type="ColorRect" parent="SeaGradient" unique_id=1522039745]
 offset_left = -20.0
 offset_top = 100.0
 offset_right = 1132.0
 offset_bottom = 500.0
 color = Color(0.1, 0.5, 0.8, 1)
 
-[node name="Layer2_Mid" type="ColorRect" parent="SeaGradient"]
+[node name="Layer2_Mid" type="ColorRect" parent="SeaGradient" unique_id=1271078364]
 offset_left = -20.0
 offset_top = 500.0
 offset_right = 1132.0
 offset_bottom = 1000.0
 color = Color(0.05, 0.3, 0.6, 1)
 
-[node name="Layer3_Deep" type="ColorRect" parent="SeaGradient"]
+[node name="Layer3_Deep" type="ColorRect" parent="SeaGradient" unique_id=982289716]
 offset_left = -20.0
 offset_top = 1000.0
 offset_right = 1132.0
 offset_bottom = 1500.0
 color = Color(0.02, 0.15, 0.4, 1)
 
-[node name="Layer4_Abyss" type="ColorRect" parent="SeaGradient"]
+[node name="Layer4_Abyss" type="ColorRect" parent="SeaGradient" unique_id=328917064]
 offset_left = -20.0
 offset_top = 1500.0
 offset_right = 1132.0

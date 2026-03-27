@@ -3,12 +3,13 @@ extends Area2D
 ## Player-controlled magnet with simplified state cycle.
 ##
 ## State flow:
-##   IDLE → SINKING → CHECK → IDLE
+##   IDLE → SINKING → IDLE
 ##
 ## IDLE:    Magnet at mount_position. Player moves boat. Tap to drop.
-## SINKING: Gravity pulls down. Hold mouse = pull up. Release = sink again.
-##          A/D still moves boat at half speed. Area2D catches items on contact.
-## CHECK:   Reached surface. Items exchanged. Auto-returns to IDLE.
+## SINKING: Gravity pulls down. Hold = pull up. Release = sink again.
+##          Area2D catches items on contact.
+##          Reaching surface with items → emits surface_reached → IDLE.
+##          Main.gd handles item counting animation.
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -18,7 +19,7 @@ enum State { IDLE, SINKING, CHECK }
 
 const _VALID_TRANSITIONS: Dictionary = {
 	State.IDLE: [State.SINKING],
-	State.SINKING: [State.CHECK],
+	State.SINKING: [State.IDLE],
 	State.CHECK: [State.IDLE],
 }
 
@@ -29,7 +30,6 @@ const _VALID_TRANSITIONS: Dictionary = {
 signal state_changed(old_state: State, new_state: State)
 signal item_contacted(item: Node2D)
 signal surface_reached(attached_items: Array)
-signal check_completed()
 
 # ---------------------------------------------------------------------------
 # Exports
@@ -62,8 +62,8 @@ var scene_right: float = 0.0
 var _current_state: State = State.IDLE
 var _velocity: Vector2 = Vector2.ZERO
 var _attached_items: Array = []
-var _is_pulling: bool = false  # Hold mouse = pull up
-var _check_timer: SceneTreeTimer = null
+var _is_pulling: bool = false  # Hold screen = pull up
+var _sinking_blocked: bool = false  # True = hit seabed or full+metal, no gravity until player pulls
 
 # ---------------------------------------------------------------------------
 # Child references
@@ -103,11 +103,12 @@ func _ready() -> void:
 	# Connect overlap for item pickup (RigidBody2D metals)
 	body_entered.connect(_on_body_entered)
 
-	# Try loading real sprite
+	# Try loading real sprite — show Sprite2D and hide ColorRect placeholder
 	var sprite_path: String = "res://assets/sprites/magnet/magnet.png"
 	if ResourceLoader.exists(sprite_path):
 		$Sprite2D.texture = load(sprite_path)
-		$Sprite2D.modulate = Color.WHITE
+		$Sprite2D.visible = true
+		$ColorRect.visible = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -177,13 +178,20 @@ func drop_heaviest() -> void:
 
 
 func force_reset() -> void:
-	_detach_all_items()
+	_free_all_items()
 	_velocity = Vector2.ZERO
 	_is_pulling = false
+	_sinking_blocked = false
 	position = mount_position
 	_current_state = State.IDLE
 	_camera.enabled = false
 	set_physics_process(false)
+
+
+## Clear the internal attached items list without freeing nodes.
+## Call this after Main.gd finishes counting animation.
+func clear_attached_list() -> void:
+	_attached_items.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -192,10 +200,15 @@ func force_reset() -> void:
 
 func _process_sinking(delta: float) -> void:
 	if _is_pulling:
-		# Pull upward — speed reduced by weight
+		# Player is pulling — clear blocked flag, move upward
+		_sinking_blocked = false
 		var total_weight: float = _get_total_weight()
 		var pull_speed: float = base_retrieve_speed / (1.0 + total_weight * weight_drag_factor)
 		_velocity.y = -pull_speed
+	elif _sinking_blocked:
+		# Hit seabed or full+metal — stay put until player pulls
+		_velocity = Vector2.ZERO
+		return
 	else:
 		# Sink with gravity
 		_velocity.y = minf(_velocity.y + sink_gravity * delta, max_sink_speed)
@@ -207,16 +220,23 @@ func _process_sinking(delta: float) -> void:
 	position.x = clampf(position.x + _velocity.x * delta, scene_left, scene_right)
 	position.y += _velocity.y * delta
 
-	# Clamp at max depth (don't go below seabed)
+	# Seabed — position-based clamp
+	if position.y >= GameConfig.SEABED_Y:
+		position.y = GameConfig.SEABED_Y
+		_velocity = Vector2.ZERO
+		_sinking_blocked = true
+
+	# Max depth safety clamp
 	if position.y >= surface_y + max_depth:
 		position.y = surface_y + max_depth
-		_velocity.y = 0.0
+		_velocity = Vector2.ZERO
+		_sinking_blocked = true
 
-	# Reached surface while pulling → CHECK
+	# Reached surface while pulling → IDLE (Main.gd handles counting animation)
 	if _is_pulling and position.y <= surface_y:
 		position.y = surface_y
 		surface_reached.emit(_attached_items.duplicate())
-		_transition_to(State.CHECK)
+		_transition_to(State.IDLE)
 
 
 # ---------------------------------------------------------------------------
@@ -247,50 +267,18 @@ func _enter_state(state: State) -> void:
 			_camera.enabled = false
 			_velocity = Vector2.ZERO
 			_is_pulling = false
-			_detach_all_items()
-			check_completed.emit()
+			_sinking_blocked = false
+			# Items are NOT freed here — Main.gd handles counting animation
 
 		State.SINKING:
 			set_physics_process(true)
 			_camera.enabled = true
 			_velocity = Vector2.ZERO
 			_is_pulling = false
+			_sinking_blocked = false
 			# First drop starts the round timer
 			if round_timer:
 				round_timer.start_round()
-
-		State.CHECK:
-			set_physics_process(false)
-			_is_pulling = false
-			if round_timer:
-				round_timer.set_paused(true)
-			_start_check_timeout()
-
-
-## Called by external systems (shop UI) to finish the CHECK phase.
-func request_continue() -> void:
-	if _current_state != State.CHECK:
-		return
-	_cancel_check_timeout()
-	_complete_check()
-
-
-func _start_check_timeout() -> void:
-	_check_timer = get_tree().create_timer(30.0)
-	_check_timer.timeout.connect(request_continue, CONNECT_ONE_SHOT)
-
-
-func _cancel_check_timeout() -> void:
-	if _check_timer and _check_timer.timeout.is_connected(request_continue):
-		_check_timer.timeout.disconnect(request_continue)
-	_check_timer = null
-
-
-func _complete_check() -> void:
-	if round_timer:
-		round_timer.set_paused(false)
-	position = mount_position
-	_transition_to(State.IDLE)
 
 
 # ---------------------------------------------------------------------------
@@ -300,10 +288,16 @@ func _complete_check() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if _current_state != State.SINKING:
 		return
+
 	if not body.is_in_group("metal"):
 		return
+
+	# Already at max capacity + touching metal → clamp position, block sinking
 	if _attached_items.size() >= max_attach_count:
+		_velocity = Vector2.ZERO
+		_sinking_blocked = true
 		return
+
 	if body in _attached_items:
 		return
 
@@ -326,7 +320,7 @@ func _attach_item_deferred(item: Node2D) -> void:
 		item.rotation = 0.0
 
 
-func _detach_all_items() -> void:
+func _free_all_items() -> void:
 	for item in _attached_items:
 		if is_instance_valid(item):
 			item.queue_free()

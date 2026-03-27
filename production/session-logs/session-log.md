@@ -310,3 +310,51 @@ df19a03 Merge main into master and resolve README conflict
 - 舊原型腳本 Magnet.gd / Boat.gd 仍存在但未使用
 ---
 
+## Session End: 20260327_110901
+### Commits
+b1d192e Integrate UI systems (shop, HUD, round end) onto master architecture
+---
+
+## Session End: 20260327_113937
+### Commits
+b1d192e Integrate UI systems (shop, HUD, round end) onto master architecture
+### Uncommitted Changes
+production/session-logs/session-log.md
+---
+
+## Session End: 20260327_140413
+### Commits
+b1d192e Integrate UI systems (shop, HUD, round end) onto master architecture
+### Uncommitted Changes
+Boat.tscn
+Fish.tscn
+Magnet.tscn
+Main.gd
+Main.tscn
+MetalObject.tscn
+assets/sprites/ASSET_MANIFEST.md
+autoload/game_config.gd
+production/session-logs/session-log.md
+src/boat/boat_controller.gd
+src/items/metal_object.gd
+src/magnet/magnet_state_machine.gd
+---
+
+## Session End: 20260327_145131
+### Commits
+b1d192e Integrate UI systems (shop, HUD, round end) onto master architecture
+### Uncommitted Changes
+Boat.tscn
+Fish.tscn
+Magnet.tscn
+Main.gd
+Main.tscn
+MetalObject.tscn
+assets/sprites/ASSET_MANIFEST.md
+autoload/game_config.gd
+production/session-logs/session-log.md
+src/boat/boat_controller.gd
+src/items/metal_object.gd
+src/magnet/magnet_state_machine.gd
+---
+

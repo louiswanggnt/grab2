@@ -47,11 +47,12 @@ func _ready() -> void:
 	_prev_x = position.x
 	TouchInputManager.move_direction_changed.connect(_on_move_direction_changed)
 	position.x = clampf(position.x, scene_left, scene_right)
-	# Try loading real sprite
+	# Try loading real sprite — show Sprite2D and hide ColorRect placeholder
 	var sprite_path: String = "res://assets/sprites/boat/boat.png"
 	if ResourceLoader.exists(sprite_path):
 		$Sprite2D.texture = load(sprite_path)
-		$Sprite2D.modulate = Color.WHITE
+		$Sprite2D.visible = true
+		$ColorRect.visible = false
 
 
 func _physics_process(_delta: float) -> void:
