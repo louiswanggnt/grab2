@@ -63,6 +63,7 @@ var _current_state: State = State.IDLE
 var _velocity: Vector2 = Vector2.ZERO
 var _attached_items: Array = []
 var _is_pulling: bool = false  # Hold mouse = pull up
+var _check_timer: SceneTreeTimer = null
 
 # ---------------------------------------------------------------------------
 # Child references
@@ -101,6 +102,12 @@ func _ready() -> void:
 
 	# Connect overlap for item pickup (RigidBody2D metals)
 	body_entered.connect(_on_body_entered)
+
+	# Try loading real sprite
+	var sprite_path: String = "res://assets/sprites/magnet/magnet.png"
+	if ResourceLoader.exists(sprite_path):
+		$Sprite2D.texture = load(sprite_path)
+		$Sprite2D.modulate = Color.WHITE
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -257,7 +264,26 @@ func _enter_state(state: State) -> void:
 			_is_pulling = false
 			if round_timer:
 				round_timer.set_paused(true)
-			call_deferred("_complete_check")
+			_start_check_timeout()
+
+
+## Called by external systems (shop UI) to finish the CHECK phase.
+func request_continue() -> void:
+	if _current_state != State.CHECK:
+		return
+	_cancel_check_timeout()
+	_complete_check()
+
+
+func _start_check_timeout() -> void:
+	_check_timer = get_tree().create_timer(30.0)
+	_check_timer.timeout.connect(request_continue, CONNECT_ONE_SHOT)
+
+
+func _cancel_check_timeout() -> void:
+	if _check_timer and _check_timer.timeout.is_connected(request_continue):
+		_check_timer.timeout.disconnect(request_continue)
+	_check_timer = null
 
 
 func _complete_check() -> void:

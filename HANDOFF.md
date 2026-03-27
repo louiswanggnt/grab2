@@ -1,7 +1,7 @@
 # Grab2 — Session Handoff
 
-> **Last Updated**: 2026-03-26
-> **Current Phase**: MVP Playable — 核心遊玩循環已可運行
+> **Last Updated**: 2026-03-27
+> **Current Phase**: MVP + UI — 商店、HUD、回合結束畫面已整合
 > **Engine**: Godot 4.6.1 / GDScript
 
 ---
