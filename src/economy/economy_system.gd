@@ -17,10 +17,16 @@ signal relic_found(item: Node2D)
 # ---------------------------------------------------------------------------
 
 const UPGRADES: Dictionary = {
+	# Small upgrades (incremental)
 	"magnet_power": { "base_cost": 50, "max_level": 10, "effect_per_level": 1.0 },
 	"retrieve_speed": { "base_cost": 80, "max_level": 8, "effect_per_level": 0.1 },
 	"boat_speed": { "base_cost": 40, "max_level": 5, "effect_per_level": 0.1 },
 	"steering": { "base_cost": 60, "max_level": 5, "effect_per_level": 0.15 },
+	# Big upgrades (unlockable equipment)
+	"new_boat_1": { "base_cost": 500, "max_level": 1, "effect_per_level": 1.0 },
+	"new_boat_2": { "base_cost": 800, "max_level": 1, "effect_per_level": 1.0 },
+	"new_magnet_1": { "base_cost": 800, "max_level": 1, "effect_per_level": 1.0 },
+	"new_magnet_2": { "base_cost": 1200, "max_level": 1, "effect_per_level": 1.0 },
 }
 
 # ---------------------------------------------------------------------------
@@ -41,6 +47,10 @@ var _upgrade_levels: Dictionary = {
 	"retrieve_speed": 0,
 	"boat_speed": 0,
 	"steering": 0,
+	"new_boat_1": 0,
+	"new_boat_2": 0,
+	"new_magnet_1": 0,
+	"new_magnet_2": 0,
 }
 
 # ---------------------------------------------------------------------------
@@ -135,9 +145,3 @@ func try_purchase_upgrade(upgrade_id: String) -> bool:
 # Private
 # ---------------------------------------------------------------------------
 
-func _resolve_item_data(entry: Object) -> Resource:
-	if entry is Resource:
-		return entry as Resource
-	if entry != null and entry.has_method("get_meta") and entry.has_meta("item_data"):
-		return entry.get_meta("item_data")
-	return null

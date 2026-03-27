@@ -46,6 +46,7 @@ func _ready() -> void:
 	_prev_x = position.x
 	TouchInputManager.move_direction_changed.connect(_on_move_direction_changed)
 	position.x = clampf(position.x, scene_left, scene_right)
+	_try_load_sprite("res://assets/sprites/boat/boat.png")
 
 
 func _physics_process(_delta: float) -> void:
@@ -93,3 +94,10 @@ func set_camera_active(active: bool) -> void:
 
 func _on_move_direction_changed(direction: float) -> void:
 	_move_direction = direction
+
+
+## Try to load a real sprite texture; keep placeholder if file missing.
+func _try_load_sprite(path: String) -> void:
+	if ResourceLoader.exists(path):
+		$Sprite2D.texture = load(path)
+		$Sprite2D.modulate = Color.WHITE

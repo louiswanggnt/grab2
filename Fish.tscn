@@ -1,6 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://d3u3j3u3j3u3"]
+[gd_scene load_steps=4 format=3 uid="uid://d3u3j3u3j3u3"]
 
 [ext_resource type="Script" path="res://Fish.gd" id="1_fish"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_fish"]
+size = Vector2(30, 20)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fish"]
 size = Vector2(30, 20)
@@ -8,12 +11,9 @@ size = Vector2(30, 20)
 [node name="Fish" type="Area2D" groups=["fish"]]
 script = ExtResource("1_fish")
 
-[node name="ColorRect" type="ColorRect" parent="."]
-offset_left = -15.0
-offset_top = -10.0
-offset_right = 15.0
-offset_bottom = 10.0
-color = Color(1, 0.5, 0, 1)
+[node name="Sprite2D" type="Sprite2D" parent="."]
+modulate = Color(1.0, 0.5, 0.0, 1)
+texture = SubResource("PlaceholderTexture2D_fish")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_fish")
